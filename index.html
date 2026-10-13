@@ -1,0 +1,204 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Currency Converter</title>
+  <style>
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      font-family: Arial, sans-serif;
+      background: #f3f7ff;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 100vh;
+    }
+
+    .card {
+      width: 100%;
+      max-width: 500px;
+      background: white;
+      border-radius: 18px;
+      box-shadow: 0 8px 24px rgba(0,0,0,0.12);
+      padding: 30px;
+    }
+
+    h1 {
+      margin-top: 0;
+      text-align: center;
+      color: #1d3557;
+    }
+
+    label {
+      display: block;
+      margin-bottom: 15px;
+      font-weight: bold;
+      color: #234;
+    }
+
+    input, select, button {
+      width: 100%;
+      padding: 12px 14px;
+      margin-top: 8px;
+      border-radius: 10px;
+      border: 1px solid #cfd8e3;
+      font-size: 16px;
+    }
+
+    button {
+      background: #2563eb;
+      color: white;
+      border: none;
+      font-weight: bold;
+      cursor: pointer;
+      margin-top: 10px;
+    }
+
+    button:hover {
+      background: #1e4fd9;
+    }
+
+    .result-box {
+      margin-top: 25px;
+      background: #eef6ff;
+      border-radius: 12px;
+      padding: 18px;
+      border: 1px solid #d6e8ff;
+    }
+
+    #resultText {
+      margin: 0;
+      font-size: 24px;
+      color: #0b3d91;
+    }
+
+    #rateText {
+      margin-top: 10px;
+      color: #3a4d63;
+      font-size: 14px;
+    }
+
+    .date-note {
+      text-align: center;
+      color: #335;
+      margin-bottom: 20px;
+      font-size: 14px;
+    }
+  </style>
+</head>
+<body>
+  <div class="card">
+    <h1>Currency Converter</h1>
+
+    <div class="date-note">
+      Current date: <strong id="currentDate">Loading...</strong>
+    </div>
+
+    <label>
+      Amount
+      <input id="amount" type="number" value="100" min="0" step="0.01" />
+    </label>
+
+    <label>
+      From currency
+      <select id="fromCurrency">
+        <option value="USD">USD - US Dollar</option>
+        <option value="EUR">EUR - Euro</option>
+        <option value="GBP">GBP - British Pound</option>
+        <option value="JPY">JPY - Japanese Yen</option>
+        <option value="CAD">CAD - Canadian Dollar</option>
+        <option value="AUD">AUD - Australian Dollar</option>
+        <option value="INR">INR - Indian Rupee</option>
+      </select>
+    </label>
+
+    <label>
+      To currency
+      <select id="toCurrency">
+        <option value="EUR">EUR - Euro</option>
+        <option value="USD">USD - US Dollar</option>
+        <option value="GBP">GBP - British Pound</option>
+        <option value="JPY">JPY - Japanese Yen</option>
+        <option value="CAD">CAD - Canadian Dollar</option>
+        <option value="AUD">AUD - Australian Dollar</option>
+        <option value="INR">INR - Indian Rupee</option>
+      </select>
+    </label>
+
+    <label>
+      Date
+      <input id="dateInput" type="date" />
+    </label>
+
+    <button id="convertBtn">Convert</button>
+
+    <div class="result-box">
+      <p id="resultText">Waiting for conversion...</p>
+      <p id="rateText"></p>
+    </div>
+  </div>
+
+  <script>
+    const dateInput = document.getElementById("dateInput");
+    const currentDateText = document.getElementById("currentDate");
+    const resultText = document.getElementById("resultText");
+    const rateText = document.getElementById("rateText");
+
+    function getTodayDate() {
+      const today = new Date();
+      return today.toISOString().split("T")[0];
+    }
+
+    function setTodayDate() {
+      const today = getTodayDate();
+      dateInput.value = today;
+      currentDateText.textContent = today;
+    }
+
+    async function convertCurrency() {
+      const amount = Number(document.getElementById("amount").value);
+      const from = document.getElementById("fromCurrency").value;
+      const to = document.getElementById("toCurrency").value;
+      const selectedDate = dateInput.value || getTodayDate();
+
+      const url = `https://api.frankfurter.app/${selectedDate}?from=${from}&to=${to}&amount=${amount}`;
+
+      try {
+        const response = await fetch(url);
+
+        if (!response.ok) {
+          throw new Error("Exchange rate request failed");
+        }
+
+        const data = await response.json();
+
+        const convertedValue = data.rates[to];
+        const rate = convertedValue / amount;
+
+        resultText.textContent = `${amount} ${from} = ${convertedValue.toFixed(2)} ${to}`;
+        rateText.textContent = `Rate: 1 ${from} = ${rate.toFixed(4)} ${to} on ${selectedDate}`;
+      } catch (error) {
+        resultText.textContent = "Unable to fetch exchange rate";
+        rateText.textContent = "Please check your internet connection or try a different date.";
+        console.error(error);
+      }
+    }
+
+    document.getElementById("convertBtn").addEventListener("click", convertCurrency);
+
+    setTodayDate();
+    convertCurrency();
+
+    // Refresh every 60 minutes to update with the current date
+    setInterval(() => {
+      setTodayDate();
+      convertCurrency();
+    }, 60 * 60 * 1000);
+  </script>
+</body>
+</html>
